@@ -15,7 +15,7 @@ mod admin {
     #[cfg(feature = "mainnet-beta")]
     declare_id!("2xN6e9Z7qT6KPAWSMNKt2WPDbeCcSDADdXqUXsh3UVfK");
     #[cfg(not(feature = "mainnet-beta"))]
-    declare_id!("E7iAhFMa9KvwhJtaPpoqJE4wPZb16zj2Az7PM9YdWK15");
+    declare_id!("3vx52SAPTyadx2nKbCguydL36stidLs5dskLshoMMsx4");
 }
 
 /// Accounts for [merkle_distributor::handle_new_distributor].
