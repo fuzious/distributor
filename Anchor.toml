@@ -1,27 +1,24 @@
-[toolchain]
-
 [features]
 seeds = true
 skip-lint = false
-
 [programs.devnet]
-merkle_distributor = "HQAZCrahgetT453VM2WUX4TSgV98xMrJ1L2SWwd6vrZB"
+merkle_distributor = "9d8qmkJoNrbutopEM2dEE4HQudVZXdz1VoBYnj1LHkgN"
 
 [programs.localnet]
-merkle_distributor = "HQAZCrahgetT453VM2WUX4TSgV98xMrJ1L2SWwd6vrZB"
+merkle_distributor = "9d8qmkJoNrbutopEM2dEE4HQudVZXdz1VoBYnj1LHkgN"
 
 [programs.mainnet]
-merkle_distributor = "HQAZCrahgetT453VM2WUX4TSgV98xMrJ1L2SWwd6vrZB"
+merkle_distributor = "9d8qmkJoNrbutopEM2dEE4HQudVZXdz1VoBYnj1LHkgN"
 
 [programs.testnet]
-merkle_distributor = "HQAZCrahgetT453VM2WUX4TSgV98xMrJ1L2SWwd6vrZB"
+merkle_distributor = "9d8qmkJoNrbutopEM2dEE4HQudVZXdz1VoBYnj1LHkgN"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
 cluster = "Devnet"
-wallet = "./keypairs/admin-keypair.json"
+wallet = "~/.config/solana/id.json"
 
 [workspace]
 members = ["programs/merkle-distributor"]
