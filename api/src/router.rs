@@ -107,7 +107,7 @@ pub struct RouterState {
     pub basic_auth_user: Option<String>,
     pub basic_auth_password: Option<String>,
     pub program_id: Pubkey,
-    pub tree: HashMap<Pubkey, (Pubkey, TreeNode)>,
+    pub tree: HashMap<u64, HashMap<Pubkey, (Pubkey, TreeNode)>>,
     pub rpc_client: RpcClient,
     pub cache: Cache,
     pub start_amount_pct: u128,
@@ -158,9 +158,9 @@ pub fn get_routes(state: Arc<RouterState>) -> Router {
     if state.needs_auth() {
         let auth_routes = Router::new()
             .route("/distributors", get(get_distributors))
-            .route("/user/:user_pubkey", get(get_user_info))
-            .route("/claim/:user_pubkey", get(get_claim_status))
-            .route("/eligibility/:user_pubkey", get(get_eligibility))
+            .route("/user/:version/:user_pubkey", get(get_user_info))
+            .route("/claim/:version/:user_pubkey", get(get_claim_status))
+            .route("/eligibility/:version/:user_pubkey", get(get_eligibility))
             .route_layer(ValidateRequestHeaderLayer::basic(
                 state.basic_auth_user.clone().unwrap().as_str(),
                 state.basic_auth_password.clone().unwrap().as_str(),
@@ -169,19 +169,23 @@ pub fn get_routes(state: Arc<RouterState>) -> Router {
     } else {
         router = router
             .route("/distributors", get(get_distributors))
-            .route("/user/:user_pubkey", get(get_user_info))
-            .route("/claim/:user_pubkey", get(get_claim_status))
-            .route("/eligibility/:user_pubkey", get(get_eligibility));
+            .route("/user/:version/:user_pubkey", get(get_user_info))
+            .route("/claim/:version/:user_pubkey", get(get_claim_status))
+            .route("/eligibility/:version/:user_pubkey", get(get_eligibility));
     }
 
     router.layer(middleware).layer(cors).with_state(state)
 }
 
 fn get_user_proof(
-    merkle_tree: &HashMap<Pubkey, (Pubkey, TreeNode)>,
+    trees_by_version: &HashMap<u64, HashMap<Pubkey, (Pubkey, TreeNode)>>,
+    version: u64,
     pubkey: String,
 ) -> Result<UserProof> {
     let user_pubkey: Pubkey = Pubkey::from_str(pubkey.as_str())?;
+    let merkle_tree = trees_by_version
+        .get(&version)
+        .ok_or_else(|| ApiError::UserNotFound(format!("Version {} not found", version)))?;
     let node = merkle_tree
         .get(&user_pubkey)
         .ok_or(ApiError::UserNotFound(user_pubkey.to_string()))?;
@@ -203,10 +207,9 @@ fn get_user_proof(
 #[instrument(level = "error")]
 async fn get_user_info(
     State(state): State<Arc<RouterState>>,
-    Path(user_pubkey): Path<String>,
+    Path((version, user_pubkey)): Path<(u64, String)>,
 ) -> Result<impl IntoResponse> {
-    let merkle_tree = &state.tree;
-    let proof = get_user_proof(merkle_tree, user_pubkey)?;
+    let proof = get_user_proof(&state.tree, version, user_pubkey)?;
     Ok(Json(proof))
 }
 
@@ -232,8 +235,10 @@ pub struct ClaimStatusResp {
 #[instrument(level = "error")]
 async fn get_claim_status(
     State(state): State<Arc<RouterState>>,
-    Path(user_pubkey): Path<String>,
+    Path((version, user_pubkey)): Path<(u64, String)>,
 ) -> Result<impl IntoResponse> {
+    // Verify user exists in this version's tree
+    let _proof = get_user_proof(&state.tree, version, user_pubkey.clone())?;
     match state.cache.get_claim_status(&user_pubkey) {
         Some(data) => Ok(Json(ClaimStatusResp {
             claimant: data.data.claimant,
@@ -284,10 +289,9 @@ pub struct EligibilityResp {
 #[instrument(level = "error")]
 async fn get_eligibility(
     State(state): State<Arc<RouterState>>,
-    Path(user_pubkey): Path<String>,
+    Path((version, user_pubkey)): Path<(u64, String)>,
 ) -> Result<impl IntoResponse> {
-    let merkle_tree = &state.tree;
-    let proof = get_user_proof(merkle_tree, user_pubkey.clone())?;
+    let proof = get_user_proof(&state.tree, version, user_pubkey.clone())?;
     let distributor = state.cache.get_distributor(&proof.merkle_tree);
     let curr_ts = SystemTime::now()
         .duration_since(UNIX_EPOCH)

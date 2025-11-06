@@ -9,7 +9,6 @@ export function loadKeypair(privateKey: string): Keypair {
         console.log(`loading private key from ${privateKey}`);
         privateKey = fs.readFileSync(privateKey).toString();
     }
-
     if (privateKey.includes('[') && privateKey.includes(']')) {
         console.log(`Trying to load private key as numbers array`);
         loadedKey = Uint8Array.from(JSON.parse(privateKey));

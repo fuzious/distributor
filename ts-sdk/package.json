@@ -5,15 +5,14 @@
   "main": "src/index.ts",
   "scripts": {
     "build": "rm -rf dist && tsc",
-    "example": "yarn run ts-node example/exampleNewClaim.ts",
-    "exampleLocked": "yarn run ts-node example/exampleClaimLocked.ts",
+    "example": "yarn run ts-node dist/ts-sdk/example/exampleNewClaim.js",
+    "exampleLocked": "yarn run ts-node dist/ts-sdk/example/exampleClaimLocked.js",
     "prettify:fix": "prettier --write './src/**/*.ts'"
   },
   "exports": {
     "import": "./src/index.ts",
     "require": "./dist/ts-sdk/src/index.js"
   },
-  "type": "module",
   "files": [
     "dist"
   ],

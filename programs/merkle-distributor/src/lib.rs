@@ -21,7 +21,7 @@ pub mod instructions;
 pub mod state;
 use solana_security_txt::security_txt;
 
-declare_id!("9d8qmkJoNrbutopEM2dEE4HQudVZXdz1VoBYnj1LHkgN");
+declare_id!("6YbCoGRzG1K9PouQKNrs3bMnHye77FsiWCTLYnU59TRU");
 
 security_txt! {
     // Required fields

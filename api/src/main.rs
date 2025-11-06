@@ -9,7 +9,7 @@ use std::{
 use clap::Parser;
 use csv::Reader;
 use futures::future::join_all;
-use jito_merkle_tree::{airdrop_merkle_tree::AirdropMerkleTree, utils::get_merkle_distributor_pda};
+use jito_merkle_tree::{airdrop_merkle_tree::AirdropMerkleTree, tree_node::TreeNode, utils::get_merkle_distributor_pda};
 use router::RouterState;
 use solana_program::pubkey::Pubkey;
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
@@ -119,7 +119,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     };
     paths.sort_by_key(|dir| dir.path());
 
-    let tree = Arc::new(Mutex::new(HashMap::new()));
+    let tree: Arc<Mutex<HashMap<u64, HashMap<Pubkey, (Pubkey, TreeNode)>>>> = Arc::new(Mutex::new(HashMap::new()));
     let distributors = Arc::new(Mutex::new(vec![]));
     let start_all_trees = std::time::Instant::now();
     println!("checking {} files for merkle trees", paths.len());
@@ -169,11 +169,14 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
                     max_num_nodes: single_tree.max_num_nodes,
                     max_total_claim: single_tree.max_total_claim,
                 });
+                drop(distributors);
+                
+                let mut trees_by_version = tree_clone.lock().await;
+                let version_tree = trees_by_version
+                    .entry(single_tree.airdrop_version)
+                    .or_insert_with(HashMap::new);
                 for node in single_tree.tree_nodes.iter() {
-                    tree_clone
-                        .lock()
-                        .await
-                        .insert(node.claimant, (distributor_pubkey, node.clone()));
+                    version_tree.insert(node.claimant, (distributor_pubkey, node.clone()));
                 }
                 let duration_single_tree = start_single_tree.elapsed();
                 println!(

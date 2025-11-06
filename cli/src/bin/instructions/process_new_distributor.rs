@@ -37,7 +37,7 @@ pub fn process_new_distributor(args: &Args, new_distributor_args: &NewDistributo
         }
         let (distributor_pubkey, _bump) =
             get_merkle_distributor_pda(&args.program_id, &args.mint, merkle_tree.airdrop_version);
-
+        println!("Distributor PDA: {}", distributor_pubkey);
         if let Some(account) = client
             .get_account_with_commitment(&distributor_pubkey, CommitmentConfig::confirmed())
             .unwrap()
@@ -83,14 +83,19 @@ pub fn process_new_distributor(args: &Args, new_distributor_args: &NewDistributo
                 ),
             );
         }
-        println!("clawback_receiver: ");
-        println!("keypair: {}", keypair.pubkey());
-        println!(
-            "keypair balance: {}",
-            client.get_balance(&keypair.pubkey()).unwrap()
-        );
-        println!("program payer: {}", program.payer());
-        let clawback_receiver = get_or_create_ata(&program, args.mint, keypair.pubkey()).unwrap();
+        let clawback_receiver_owner = new_distributor_args.clawback_receiver_owner.unwrap_or(keypair.pubkey());
+        let clawback_receiver = spl_associated_token_account::get_associated_token_address(&clawback_receiver_owner, &args.mint);
+
+        if client.get_account_data(&clawback_receiver).is_err() {
+            ixs.push(
+                spl_associated_token_account::instruction::create_associated_token_account(
+                    &keypair.pubkey(),
+                    &clawback_receiver_owner,
+                    &args.mint,
+                    &spl_token::ID,
+                ),
+            );
+        }
 
         ixs.push(Instruction {
             program_id: args.program_id,

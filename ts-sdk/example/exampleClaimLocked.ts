@@ -4,13 +4,12 @@ import { Wallet } from "@coral-xyz/anchor";
 import { loadKeypair } from "./utils";
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 
-const distributorProgramId = new PublicKey("E7HtfkEMhmn9uwL7EFNydcXBWy5WCYN1vFmKKjipEH1x");
-const userWithoutClaim = new PublicKey("2Xz15NfayPmLmhjVuXTzXSF2GgDirJ7jrwFonHFTUTPj");
+const distributorProgramId = new PublicKey("9d8qmkJoNrbutopEM2dEE4HQudVZXdz1VoBYnj1LHkgN");
+const userWithoutClaim = new PublicKey("7Gzxb9aeSYu7f91y583aa2iQ7XZKMg7M2a7JfAiypc6N");
 const rpc = "https://api.devnet.solana.com";
 
-const claimantKeypairPath = "/path/to/claimant/keypair.json";
-
-const distributorApiUrl = "http://127.0.0.1:7001";
+const claimantKeypairPath = "../../keypairs/sol_phantom.json";
+const distributorApiUrl = "https://api.amm.skatechain.org/distributor/";
 
 async function main() {
 

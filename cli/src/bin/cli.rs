@@ -136,6 +136,10 @@ pub struct CloseDistributorArgs {
     pub merkle_tree_path: PathBuf,
     #[clap(long, env)]
     pub airdrop_version: Option<u64>,
+
+    /// Destination token account for closed distributor funds
+    #[clap(long, env)]
+    pub destination_token_account: Option<Pubkey>,
 }
 
 #[derive(Parser, Debug)]
@@ -217,12 +221,17 @@ pub struct NewDistributorArgs {
 
     #[clap(long, env)]
     pub skip_verify: bool,
+
+    #[clap(long, env)]
+    pub clawback_receiver_owner: Option<Pubkey>,
 }
 
 #[derive(Parser, Debug)]
 pub struct ClawbackArgs {
     #[clap(long, env)]
     pub merkle_tree_path: PathBuf,
+    #[clap(long, env)]
+    pub airdrop_version: Option<u64>,
 }
 
 #[derive(Parser, Debug)]
@@ -529,15 +538,16 @@ fn check_distributor_onchain_matches(
             return Err("closable mismatch");
         }
 
-        // TODO fix code
-        let program = args.get_program_client();
-        let clawback_receiver_token_account: TokenAccount = program
-            .account(distributor.clawback_receiver)
-            .map_err(|_| "clawback_receiver mismatch")?;
+        let clawback_receiver_owner = new_distributor_args
+            .clawback_receiver_owner
+            .unwrap_or(pubkey);
+        let expected_clawback_receiver_ata =
+            get_associated_token_address(&clawback_receiver_owner, &args.mint);
 
-        if clawback_receiver_token_account.owner != distributor.admin {
+        if distributor.clawback_receiver != expected_clawback_receiver_ata {
             return Err("clawback_receiver mismatch");
         }
+
         if distributor.admin != pubkey {
             return Err("admin mismatch");
         }
