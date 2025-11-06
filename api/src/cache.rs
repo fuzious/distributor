@@ -25,6 +25,11 @@ use crate::{error::ApiError, router::SingleDistributor};
 
 const INTERVAL: Duration = Duration::from_secs(30);
 
+/// Helper function to create composite cache key from claimant and distributor
+fn claim_status_key(claimant: &Pubkey, distributor: &Pubkey) -> String {
+    format!("{}:{}", claimant, distributor)
+}
+
 #[derive(Clone)]
 pub struct DataAndSlot<T> {
     pub data: T,
@@ -88,9 +93,13 @@ impl Cache {
         }
     }
 
-    pub fn get_claim_status(&self, claimant: &String) -> Option<DataAndSlot<ClaimStatus>> {
+    pub fn get_claim_status(&self, claimant: &String, distributor: &String) -> Option<DataAndSlot<ClaimStatus>> {
+        let key = claim_status_key(
+            &Pubkey::from_str(claimant).ok()?,
+            &Pubkey::from_str(distributor).ok()?,
+        );
         self.claim_status_cache
-            .get(claimant)
+            .get(&key)
             .map(|r| r.value().clone())
     }
 
@@ -367,7 +376,9 @@ impl Cache {
         let cache_clone = Arc::clone(&self.claim_status_cache);
         tokio::spawn(async move {
             while let Some((pubkey, data)) = update_rx.recv().await {
-                match cache_clone.entry(data.data.claimant.to_string()) {
+                // Use composite key: claimant:distributor
+                let cache_key = claim_status_key(&data.data.claimant, &data.data.distributor);
+                match cache_clone.entry(cache_key.clone()) {
                     Entry::Occupied(mut entry) => {
                         if entry.get().data == data.data {
                             // println!("Data is the same as what's in cache");

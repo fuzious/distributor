@@ -237,18 +237,31 @@ async fn get_claim_status(
     State(state): State<Arc<RouterState>>,
     Path((version, user_pubkey)): Path<(u64, String)>,
 ) -> Result<impl IntoResponse> {
-    // Verify user exists in this version's tree
-    let _proof = get_user_proof(&state.tree, version, user_pubkey.clone())?;
-    match state.cache.get_claim_status(&user_pubkey) {
-        Some(data) => Ok(Json(ClaimStatusResp {
-            claimant: data.data.claimant,
-            locked_amount: data.data.locked_amount,
-            locked_amount_withdrawn: data.data.locked_amount_withdrawn,
-            unlocked_amount: data.data.unlocked_amount,
-            unlocked_amount_claimed: data.data.unlocked_amount_claimed,
-            closable: data.data.closable,
-            distributor: data.data.distributor,
-        })),
+    // Verify user exists in this version's tree and get the distributor pubkey
+    let proof = get_user_proof(&state.tree, version, user_pubkey.clone())?;
+    let distributor_pubkey = proof.merkle_tree.clone();
+    
+    // Verify that the ClaimStatus matches the requested version's distributor
+    match state.cache.get_claim_status(&user_pubkey, &distributor_pubkey) {
+        Some(data) => {
+            // Double-check that the ClaimStatus distributor matches the requested version
+            if data.data.distributor.to_string() != distributor_pubkey {
+                return Err(ApiError::UserNotFound(format!(
+                    "ClaimStatus distributor mismatch: expected {}, got {}",
+                    distributor_pubkey,
+                    data.data.distributor
+                )).into());
+            }
+            Ok(Json(ClaimStatusResp {
+                claimant: data.data.claimant,
+                locked_amount: data.data.locked_amount,
+                locked_amount_withdrawn: data.data.locked_amount_withdrawn,
+                unlocked_amount: data.data.unlocked_amount,
+                unlocked_amount_claimed: data.data.unlocked_amount_claimed,
+                closable: data.data.closable,
+                distributor: data.data.distributor,
+            }))
+        },
         None => Err(ApiError::UserNotFound(user_pubkey).into()),
     }
 }
@@ -310,10 +323,21 @@ async fn get_eligibility(
             state.cache.default_mint.clone(),
         ),
     };
+    let distributor_pubkey = proof.merkle_tree.clone();
     let (unlocked_amount_claimed, locked_amount_withdrawn, claimable_amount) = state
         .cache
-        .get_claim_status(&user_pubkey)
+        .get_claim_status(&user_pubkey, &distributor_pubkey)
         .map(|r| {
+            // Verify ClaimStatus matches the requested distributor
+            if r.data.distributor.to_string() != distributor_pubkey {
+                warn!(
+                    "ClaimStatus distributor mismatch in eligibility: expected {}, got {}",
+                    distributor_pubkey,
+                    r.data.distributor
+                );
+                // Fall through to default calculation
+                return (0, 0, 0);
+            }
             (
                 r.data.unlocked_amount_claimed,
                 r.data.locked_amount_withdrawn,
