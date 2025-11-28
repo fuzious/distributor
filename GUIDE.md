@@ -259,5 +259,5 @@ source ~/.bashrc && cargo run --bin cli -- \
     --airdrop-version 9
 ```
 ```
-spl-token transfer 9v6BKHg8WWKBPTGqLFQz87RxyaHHDygx8SnZEbBFmns2 74995 7jDhrU6qu3JzZrSmJgygAM8VDzWk9oZG32MXYGDrUb9o --owner ~/.config/solana/id.json --fund-recipient --url https://api.mainnet-beta.solana.com --allow-non-system-account-recipient
+spl-token transfer 9v6BKHg8WWKBPTGqLFQz87RxyaHHDygx8SnZEbBFmns2 1 BrN3gpQ54tanKJgzUqZyFFi7AvsPVkGj4dHb3wL88DUM --owner ~/.config/solana/id.json --fund-recipient --url https://api.mainnet-beta.solana.com --allow-non-system-account-recipient
 ```
