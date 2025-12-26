@@ -35,7 +35,7 @@ source ~/.bashrc && cargo run --bin cli -- create-merkle-tree \
     --merkle-tree-path merkle_trees \
     --max-nodes-per-tree 1000000 \
     --decimals 9 \
-    --start-airdrop-version 6 \
+    --start-airdrop-version 13 \
     --amount 0
 ```
 
@@ -220,7 +220,7 @@ cargo run --bin cli -- create-merkle-tree \
     --merkle-tree-path merkle_trees \
     --max-nodes-per-tree 1000000 \
     --decimals 9 \
-    --start-airdrop-version 12 \
+    --start-airdrop-version 14 \
     --amount 0
 ```
 
@@ -256,8 +256,8 @@ source ~/.bashrc && cargo run --bin cli -- \
     --clawback-receiver-owner 6dfrn1uceBjjUi6HMsJimgcC4qaGbPQQtsHC1Wtwhct1 \
     --enable-slot 0 \
     --closable \
-    --airdrop-version 12
+    --airdrop-version 14
 ```
 ```
-spl-token transfer 9v6BKHg8WWKBPTGqLFQz87RxyaHHDygx8SnZEbBFmns2 75000 4XaTKYnve9Fox8jL49aQwWcpVDofsbP8SxX3qeisEg9i --owner ~/.config/solana/id.json --fund-recipient --url https://api.mainnet-beta.solana.com --allow-non-system-account-recipient
+spl-token transfer 9v6BKHg8WWKBPTGqLFQz87RxyaHHDygx8SnZEbBFmns2 74999 Efsenh8hGngDtNfLnaWE8YJ2ZY6ii35esrsYH4Yq1AKr --owner ~/.config/solana/id.json --fund-recipient --url https://api.mainnet-beta.solana.com --allow-non-system-account-recipient
 ```
